@@ -1,0 +1,85 @@
+fs = 44100;%采样率
+t_note=linspace(0,3/25,3/25*fs);% 0.12秒
+t_startblank=linspace(0,11/100,11/100*fs);% 0.12秒
+t_gap=linspace(0,1/100,1/100*fs);%0.01秒
+t4=linspace(0,12/25,12/25*fs);% 0.48 秒
+t_link=linspace(0,1/50,1/50*fs);%0.02秒
+
+hi_so= 5*sin(2*pi* 784 *t_note);
+hi_me= 5*sin(2*pi* 622 *t4);
+hi_fa= 5*sin(2*pi* 698 *t_note);
+hi_re2= 5*sin(2*pi* 587 *t4);
+blk_startblank=zeros(1,length(t_startblank));
+blk_gap=zeros(1,length(t_gap));
+blk_link=zeros(1,length(t_link));
+
+% Fate Note 5 5 5 3 4 4 4 2
+Fate=[blk_startblank hi_so blk_gap hi_so blk_gap hi_so blk_gap hi_me blk_link blk_startblank hi_fa blk_gap hi_fa blk_gap hi_fa blk_gap hi_re2 blk_link ];
+sound(Fate,fs)
+
+figure(1)
+plot(linspace(0,2,2*fs),Fate,'b');
+axis([-inf inf -10 10]);
+xlabel('Time (s)');
+
+%% Create noise
+noisy=[];
+nois_round=250;
+music_round=50;
+
+for k=1:nois_round % 以2s为时间单位模板，填充16种噪音
+x=rand(1,16);y=sum(x);R=x/y;
+for N=1:15
+r(k,N)= floor(88200*R(N));
+end
+r(k,16)=88200-sum(r(k,1:15));
+
+hi_son1= 5*sin(2*pi* 784 *linspace(0,r(k,1)/fs,r(k,1)));
+hi_son2= 5*sin(2*pi* 784 *linspace(0,r(k,2)/fs,r(k,2)));
+hi_son3= 5*sin(2*pi* 784 *linspace(0,r(k,3)/fs,r(k,3)));
+hi_men= 5*sin(2*pi* 622 *linspace(0,r(k,4)/fs,r(k,4)));
+hi_fan1= 5*sin(2*pi* 698 *linspace(0,r(k,5)/fs,r(k,5)));
+hi_fan2= 5*sin(2*pi* 698 *linspace(0,r(k,6)/fs,r(k,6)));
+hi_fan3= 5*sin(2*pi* 698 *linspace(0,r(k,7)/fs,r(k,7)));
+hi_ren= 5*sin(2*pi* 587 *linspace(0,r(k,8)/fs,r(k,8)));
+
+blk_n1= zeros(1,r(k,9));
+blk_n2= zeros(1,r(k,10));
+blk_n3= zeros(1,r(k,11));
+blk_n4= zeros(1,r(k,12));
+blk_n5= zeros(1,r(k,13));
+blk_n6= zeros(1,r(k,14));
+blk_n7= zeros(1,r(k,15));
+blk_n8= zeros(1,r(k,16));
+
+nois_cell = [];
+nois_cell{1} = hi_son1;
+nois_cell{2} = hi_son2;
+nois_cell{3} = hi_son3;
+nois_cell{4} = hi_men;
+nois_cell{5} = hi_fan1;
+nois_cell{6} = hi_fan2;
+nois_cell{7} = hi_fan3;
+nois_cell{8} = hi_ren;
+nois_cell{9} = blk_n1;
+nois_cell{10} = blk_n2;
+nois_cell{11} = blk_n3;
+nois_cell{12} = blk_n4;
+nois_cell{13} = blk_n5;
+nois_cell{14} = blk_n6;
+nois_cell{15} = blk_n7;
+nois_cell{16} = blk_n8;
+noisy(k,:)=rand_box(nois_cell);
+end
+
+Muse=cat(1,noisy,repmat(Fate,music_round,1));
+rowrank=randperm(size(Muse,1));
+Muse=Muse(rowrank,:);
+Faterow=find(rowrank>nois_round);
+Music=reshape(Muse',1,[]);
+save('data.mat','Music','Faterow')
+% plot(Music);hold on ;plot(Fate);
+% sound(Music,fs);
+
+filename='Interpose_audio.wav'
+audiowrite(filename,Music,fs);
